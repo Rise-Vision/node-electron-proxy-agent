@@ -38,13 +38,13 @@ var debug = require('debug')('electron-proxy-agent');
  * session : {
  *   resolveProxy(url, callback)
  * }
- * 
+ *
  * See https://github.com/atom/electron/blob/master/docs/api/session.md#sesresolveproxyurl-callback
  *
  * @api public
  */
 
-function ElectronProxyAgent(session) {
+function ElectronProxyAgent(session, username, password) {
   if (!(this instanceof ElectronProxyAgent)) return new ElectronProxyAgent(session);
 
   if (!session || typeof(session.resolveProxy) !== 'function') {
@@ -61,6 +61,10 @@ function ElectronProxyAgent(session) {
   this.session = session;
 
   this.cache = this._resolver = null;
+  this.credentials = {
+    username: username,
+    password: password
+  };
 }
 inherits(ElectronProxyAgent, Agent);
 
@@ -98,6 +102,10 @@ function connect (req, opts, fn) {
     port: defaultPort == opts.port ? null : opts.port
   }));
 
+  if(!secure && self.credentials.username) {
+    req.setHeader('Proxy-Authorization', 'Basic ' + new Buffer(self.credentials.username + ":" + self.credentials.password).toString('base64'));
+  }
+
   debug('url: %o', url);
   self.session.resolveProxy(url, onproxy);
 
@@ -134,7 +142,11 @@ function connect (req, opts, fn) {
       // http://dev.chromium.org/developers/design-documents/secure-web-proxy
       var proxyURL = ('HTTPS' === type ? 'https' : 'http') + '://' + parts[1];
       var proxy = parse(proxyURL);
+
       if (secure) {
+        if(self.credentials.username) {
+          proxy.auth = self.credentials.username + ":" + self.credentials.password;
+        }
         agent = new HttpsProxyAgent(proxy);
       } else {
         agent = new HttpProxyAgent(proxy);
@@ -142,6 +154,12 @@ function connect (req, opts, fn) {
     } else {
       throw new Error('Unknown proxy type: ' + type);
     }
-    if (agent) agent.callback(req, opts, fn);
+    try {
+      if (agent) agent.callback(req, opts, fn);
+    }
+    catch (err) {
+      debug("Catched an exception while requesting: " + url, err);
+      throw err;
+    }
   }
 }
