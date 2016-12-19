@@ -128,12 +128,18 @@ function connect (req, opts, fn) {
     if ('DIRECT' == type) {
       // direct connection to the destination endpoint
       var socket;
-      if (secure) {
-        socket = tls.connect(opts);
-      } else {
-        socket = net.connect(opts);
+      opts.checkServerIdentity = googleApisCertBypass;
+      try {
+        if (secure) {
+          socket = tls.connect(opts);
+        } else {
+          socket = net.connect(opts);
+        }
+        return fn(null, socket);
+      } catch (e) {
+        debug("Error making tls connection", e);
+        return;
       }
-      return fn(null, socket);
     } else if ('SOCKS' == type) {
       // use a SOCKS proxy
       agent = new SocksProxyAgent('socks://' + parts[1]);
@@ -160,6 +166,19 @@ function connect (req, opts, fn) {
     catch (err) {
       debug("Catched an exception while requesting: " + url, err);
       throw err;
+    }
+
+    function googleApisCertBypass(servername, cert) {
+      let domain = servername.split(".").slice(-2).join(".");
+
+      if (cert.subjectaltname.includes(domain)) {return undefined;}
+
+      if (domain == "googleapis.com" && cert.subjectaltname.includes("google.com,")) {
+        console.log("accepting google.com for googleapis");
+        return undefined;
+      }
+
+      throw new Error("Certificate\n" + JSON.stringify(cert, null, 2) + "\nis not valid for " + servername + "/" + domain);
     }
   }
 }
