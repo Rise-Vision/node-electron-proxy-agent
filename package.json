@@ -1,6 +1,6 @@
 {
   "name": "electron-proxy-agent",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "NodeJS http(s).Agent implementation for electron shell",
   "main": "index.js",
   "repository": {
@@ -28,12 +28,11 @@
   },
   "homepage": "https://github.com/felicienfrancois/node-electron-proxy-agent",
   "dependencies": {
-    "agent-base": "2",
     "debug": "2",
     "extend": "3",
     "get-uri": "1",
-    "http-proxy-agent": "^2.1.0",
-    "https-proxy-agent": "^2.2.0",
-    "socks-proxy-agent": "2"
+    "http-proxy-agent": "^5.0.0",
+    "https-proxy-agent": "^5.0.0",
+    "socks-proxy-agent": "^6.0.0"
   }
 }
