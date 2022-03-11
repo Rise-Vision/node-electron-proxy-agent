@@ -107,7 +107,7 @@ function connect (req, opts, fn) {
   }
 
   debug('url: %o', url);
-  self.session.resolveProxy(url, onproxy);
+  self.session.resolveProxy(url).then(onproxy);
 
   // `resolveProxy()` callback function
   function onproxy (proxy) {
