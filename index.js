@@ -56,15 +56,17 @@ function ElectronProxyAgent(session, username, password) {
     }
   }
 
-  Agent.call(this, connect);
+  instance = Agent.call(this, connect);
 
-  this.session = session;
+  instance.session = session;
 
-  this.cache = this._resolver = null;
-  this.credentials = {
+  instance.cache = instance._resolver = null;
+  instance.credentials = {
     username: username,
     password: password
   };
+
+  return instance;
 }
 inherits(ElectronProxyAgent, Agent);
 
@@ -107,7 +109,7 @@ function connect (req, opts, fn) {
   }
 
   debug('url: %o', url);
-  self.session.resolveProxy(url, onproxy);
+  self.session.resolveProxy(url).then(onproxy);
 
   // `resolveProxy()` callback function
   function onproxy (proxy) {
